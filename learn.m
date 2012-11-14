@@ -18,28 +18,6 @@ function [model] = learn(X, y)
     [Lambda, obj, iter] = svm_fast(K, Y, beta);
     
     model = [X Y Lambda];
-    
-%      Z0 = zeros(t, 7);
-%      
-%      
-%      
-%      c = -0.1;
-%      phi = @(Lambda)dual_multi_svm(Lambda, K, Y, beta, c);
-%      
-%      I = eye(t, 7);
-%      g = @(Lambda)(Lambda*I + I);
-%      
-%      ub = zeros(t, 7);
-%      
-%      % Something is not the right size here ...
-%      [Z, obj, info, iter, nf, lambda_] = sqp(Z0, phi, g, [], [], ub, [], []);
-%      
-%      W = Z(1:n, :);
-%      b = Z(n+1, :);
-%      
-%      model = W;
-    
-%      norm(X, 'fro')^2; % Frobenius norm squared.
 
 end
 
@@ -50,13 +28,6 @@ function [Y] = class_to_vec(y)
     
     t = length(y);
     Y = zeros(t, 7);
-%      k = 7;
-%      classes = 'pcbdhst';
-%      
-%      
-%      for j = 1:k
-%          Y(find(y==class(j)), j) = 1;
-%      end
     
     for i = 1:t
         class = y(i);
@@ -148,32 +119,6 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
         Grad = -Y - K*(Lambda - Y)/beta;
         obj = obj + improvement;
         
-end
-
-function [Lambda,obj] = svm_quadprog(K,Y,beta)
-%
-% Author: Dale Schuurmans
-%
-% Solves 
-% max_{Lambda>=0,sum(Lambda,2)==ones} 
-%           t - tr(Y'Lambda) - tr((Y-Lambda)'K(Y-Lambda))/(2beta)
-
-    [t,k] = size(Y);
-    H = kron(eye(k,k),K)/beta;
-    y = Y(:);
-    f = y - H*y;
-    Aeq = kron(ones(1,k),eye(t,t));
-    beq = ones(t,1);
-    lb = zeros(t*k,1);
-    ub = Inf([t*k 1]);
-
-    % modified for Octave:
-    % [lambda,tmp,flag] = quadprog(H,f,[],[],Aeq,beq,lb,ub);
-    [lambda, tmp, flag] = qp([], H, f, Aeq, beq, lb, up, [], [], []);
-    
-    Lambda = reshape(lambda,t,k);
-    obj = t - y'*H*y/2 - tmp;
-    
 end
 
 function [Y] = indmax(Z)

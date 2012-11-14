@@ -15,6 +15,7 @@ function [results] = tester()
     
     yhat = classify(X, model);
     
+    t
     results = sum(yhat == y) / t;
     
     now() % finished
