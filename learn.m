@@ -5,7 +5,8 @@ function [model] = learn(X, y)
     [t, n] = size(X);
     
     Y = class_to_vec(y);
-    K = X*X';
+    sigma = 280;
+    K = gausskernel(X, X, sigma);
     beta = 0.5;
     
     [Lambda, obj, iter] = svm_fast(K, Y, beta);
@@ -56,7 +57,7 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
 % constants
     [t,k] = size(Y);
     maxiters = 1000*t;
-    TOL = 1e-6; % old val = 1e-8
+    TOL = 1e-8; % old val = 1e-8
     P = eye(k) - ones(k)/k;
     onesk = ones(1,k);
 
@@ -112,6 +113,8 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
         Grad = -Y - K*(Lambda - Y)/beta;
         obj = obj + improvement;
         
+    end
+
 end
 
 function [Y] = indmax(Z)
@@ -126,12 +129,13 @@ function [Y] = indmax(Z)
 
 end
 
-function [L] = dual_multi_svm(Lambda, K, Y, beta, c)
-% negative c is a (positive?) constant. (?=> c negative)
-% beta = (1/(2*lambda))
-% K = X*X'
+function [K] = gausskernel(X1,X2,sigma)
 
-    Lambda_Y_diff = Lambda - Y;
-    L = c + trace(Lambda'*Y) + beta*trace(Lambda_Y_diff'*K*Lambda_Y_diff);
-    
+    distance = repmat(sum(X1.^2,2),1,size(X2,1)) ...
+        + repmat(sum(X2.^2,2)',size(X1,1),1) ...
+        - 2*X1*X2';
+
+    K = exp(-distance/(2*sigma^2));
+
 end
+
