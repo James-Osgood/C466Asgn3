@@ -57,7 +57,7 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
 % constants
     [t,k] = size(Y);
     maxiters = 1000*t;
-    TOL = 1e-8; % old val = 1e-8
+    TOL = 1e-2; % old val = 1e-8
     P = eye(k) - ones(k)/k;
     onesk = ones(1,k);
 

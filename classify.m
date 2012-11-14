@@ -7,12 +7,13 @@ function [yhat] = classify(Xtest, model)
     class_set = ['pcbdhst']';
     [te, n] = size(Xtest);
     k = 7;
+    sigma = 280;
 
     X = model(:, 1:n);
     Y = model(:, n+1:n+k);
     Lambda = model(:, n+k+1:n+2*k);
     
-    K = guasskernel(Xtest, X);
+    K = gausskernel(Xtest, X, sigma);
     
     % yhat = indmax(x'*W)' =?=  max(Xtest'*W)(2)' % For non-kernel
     % yhat = indmax((1/beta)*K*(Y - Lambda)) % For kernel
