@@ -3,17 +3,10 @@ function [model] = learn(X, y)
 % y is a tX1 vector of target labels.
 % model is a learner represention.
     [t, n] = size(X);
-
-%      Y = zeros(t, 7);
-%      
-%      for s = 1:t
-%          Y(s, :) = class_to_vec(y(s));
-%      end
     
     Y = class_to_vec(y);
     K = X*X';
-    lambda = 1;
-    beta = 1 / (2*lambda);
+    beta = 0.5;
     
     [Lambda, obj, iter] = svm_fast(K, Y, beta);
     
@@ -63,7 +56,7 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
 % constants
     [t,k] = size(Y);
     maxiters = 1000*t;
-    TOL = 1e-8;
+    TOL = 1e-6; % old val = 1e-8
     P = eye(k) - ones(k)/k;
     onesk = ones(1,k);
 
