@@ -1,17 +1,17 @@
 function [results, learn_time] = tester()
-% results is a bunch of results gathered from running various learners on the
-% data
+% results is the accuracy of the learner and learn_time is the time it takes to
+% learn the model.
 
     load data3.mat;
     [t, n] = size(X);
 
-    time_before = time();
+    tic();
     
     model = learn(X, y);
     
-    learn_time = time() - time_before;
-    
     yhat = classify(X, model);
+    
+    learn_time = toc();
     
     results = sum(yhat == y) / t;
 

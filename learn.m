@@ -1,14 +1,17 @@
 function [model] = learn(X, y)
 % X is a txn matrix.
 % y is a tX1 vector of target labels.
-% model is a learner represention.
+% model is the learner represention containing X, Y, and the Lambda given by
+% the svm_fast() solver.
+
     [t, n] = size(X);
+    sigma = 9.5;
+    beta = 1;
+%      [beta, sigma] = complex_control(X, Y);
     
     Y = class_to_vec(y);
-    sigma = 280;
     K = gausskernel(X, X, sigma);
-    beta = 0.5;
-    
+
     [Lambda, obj, iter] = svm_fast(K, Y, beta);
     
     model = [X Y Lambda];
@@ -40,6 +43,88 @@ function [Y] = class_to_vec(y)
             Y(i, :) = [0 0 0 0 0 1 0];
         else % class == 't'
             Y(i, :) = [0 0 0 0 0 0 1];
+        end
+    end
+
+end
+
+function [beta, sigma] = complex_control(X, Y)
+% CV-10 validation complexity control to get the best beta and sigma values.
+
+    [t, n] = size(X);
+%      sigmas = [9.5, 10.5, 11 , 11.5,  12];
+    sigma = 9.5;
+    betas = [0.95, 0.975, 1, 1.5, 5];
+%      beta = 0.5;
+    cv = 10;
+    incr = floor(t/cv);
+    corrects = zeros(5, 10);
+    
+    for i = 1:5
+%          testSigma = sigmas(i);
+        testBeta = betas(i);
+        lb = 1;
+        for j = 1:cv
+            trainIndices = get_train_indices(j);
+            Xtrain = X(trainIndices, :);
+            Ytrain = Y(trainIndices, :);
+            Ktrain = gausskernel(Xtrain, Xtrain, sigma);
+            
+            [Lambda, obj, iter] = svm_fast(Ktrain, Ytrain, testBeta);
+            
+            testIndices = (1:t);
+            testIndices(trainIndices) = [];
+            Xtest = X(testIndices, :);
+            Ytest = Y(testIndices, :);
+            Ktest = gausskernel(Xtest, Xtrain, sigma);
+            
+            yhat = indmax((1/testBeta) * Ktest * (Ytrain - Lambda));
+            corrects(i,j) = sum(sum((yhat == indmax(Ytest))') == 7);
+
+            lb = lb + incr;
+        end
+    end
+
+    best = 0;
+    bestIndex = 1;
+    bestBeta = 0;
+    bestSigma = 0;
+    
+    for i = 1:5
+        sumCorrect = sum(corrects(i, :)) / (9*t);
+    
+%          disp('Beta: ')
+%          disp(betas(i))
+%          disp('Correct: ')
+%          disp(sumCorrect)
+    
+        if sumCorrect > best
+            best = sumCorrect;
+            bestIndex = i;
+        end
+    end
+    
+%      bestSigma = sigmas(bestIndex);
+%      disp('best sigma: ')
+%      disp(bestSigma)
+%      sigma = bestSigma;
+    
+    bestBeta = betas(bestIndex);
+    disp('best beta: ')
+    disp(bestBeta)
+    beta = bestBeta;
+    
+end
+
+function [trainIndices] = get_train_indices(j)
+% j is an index between 1 and 10.
+% trainIndices is an array of 210 equally spread indices that the learner
+% should train on for cross validation (CV-10).
+
+    trainIndices = ones(1, 210);
+    
+    for i = 0:6
+        trainIndices(1, 1+i*30:(i+1)*30) = 1+i*300+30*(j-1):i*300+30*j;
     end
 
 end
@@ -57,7 +142,7 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
 % constants
     [t,k] = size(Y);
     maxiters = 1000*t;
-    TOL = 1e-2; % old val = 1e-8
+    TOL = 1e-8;
     P = eye(k) - ones(k)/k;
     onesk = ones(1,k);
 
@@ -73,10 +158,11 @@ function [Lambda,obj,iter] = svm_fast(K,Y,beta)
         ProjLambda = (Lambda - Lambdam(:,onesk) + 1./sumM(:,onesk)).*M;
         Mnew = ProjLambda >= 0;
     end
+
     Grad = -Y - K*(ProjLambda - Y)/beta;
     obj = t - trace(Y'*ProjLambda) - trace((Y-ProjLambda)'*K*(Y-ProjLambda))/2/beta;
     Lambda = ProjLambda;
-
+    
     %%% main loop %%%
     for iter = 1:maxiters
 
@@ -119,7 +205,7 @@ end
 
 function [Y] = indmax(Z)
 %
-% Author: Dale Schuurmans
+% Author: Dr. Dale Schuurmans
 %
 
     [t,k] = size(Z);
@@ -130,6 +216,9 @@ function [Y] = indmax(Z)
 end
 
 function [K] = gausskernel(X1,X2,sigma)
+%
+% Author: Dr. Dale Schuurmans
+%
 
     distance = repmat(sum(X1.^2,2),1,size(X2,1)) ...
         + repmat(sum(X2.^2,2)',size(X1,1),1) ...
@@ -138,4 +227,3 @@ function [K] = gausskernel(X1,X2,sigma)
     K = exp(-distance/(2*sigma^2));
 
 end
-
